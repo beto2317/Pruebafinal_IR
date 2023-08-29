@@ -21,7 +21,7 @@ Debido a las actuales condiciones de estrés hídrico y fragmentación que afect
 
 ```{r}
 
-library(nicheROVER)
+
 library(vegan)
 library(ggplot2)
 library(gridExtra)
