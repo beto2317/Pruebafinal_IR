@@ -1,0 +1,177 @@
+---
+title: "Migración del Camarón de río del Norte"
+author: "Hernan Padilla"
+format: pdf
+editor: visual
+---
+
+![](logo_ifop.png){fig-align="center" width="314"}
+
+## Sección 1. Introducción
+
+::: justify
+*Cryphiops caementarius* (Molina, 1972), comúnmente conocido en Chile como Camarón de río del norte, ha sido ampliamente descrito en la literatura como una especie anfídroma, ya que los camarones adultos se aparean en ríos y arroyos de agua dulce, pero sus larvas se desarrollan en ambientes estuarinos salobres o en aguas marinas (Hartmann, 1958; Viacava *et al.,*1978; Dennenmoser *et al.,* 2010). Estos ambientes por su alta productividad planctónica, proporcionan los recursos necesarios a la larva para su sobrevivencia y desarrollo, hasta su metamorfosis (Hartmann, 1958; Bahamonde y Vila, 1971; Norambuena, 1977). Luego, postlarvas y juveniles se asientan en el fondo y buscan la desembocadura de un arroyo o río de agua dulce, para comenzar a migrar río arriba (Rivera y Meruane, 1987). En estos casos, el flujo unidireccional del agua río abajo, parece ser la señal que estimula la migración de los juveniles río arriba (Bauer 2011a).
+
+La anfidromía de los camarones es ecológicamente importante, ya que, durante estos movimientos geoespaciales pasan a formar parte de diferentes ecosistemas (fluvial, estuarino y costero) en diferentes periodos del año, afectando el hábitat, la productividad y las relaciones tróficas (Benstead, 2000; Bauer, 2013). Si bien estos movimientos fuera del rango de origen contribuyen en el potencial de dispersión de la especie y al intercambio genético entre diferentes unidades poblacionales (Dennenmoser *et al.,* 2010), también pueden representar un riesgo para los camarones que migran (Benstead *et al.,* 2000).
+
+Debido a las actuales condiciones de estrés hídrico y fragmentación que afectan a las cuencas de la región de Arica y Parinacota, surge la necesidad de identificar los patrones de migración de *C. caementarius* a traves de isotopos estables (C, N y S), considerando que este proceso podría jugar un papel crítico en la persistencia de sus poblaciones en la zona y en el manejo de la especie.
+:::
+
+## Sección 2. Selección de Librerias
+
+```{r}
+
+library(nicheROVER)
+library(vegan)
+library(ggplot2)
+library(gridExtra)
+library(ggplot2)
+library(dplyr)
+library(effectsize)
+library(maptools)
+```
+
+## Sección 3. Análisis base de datos
+
+###1. Cargar base de datos
+
+```{r}
+BD_iso<-read.csv("BD_Isotopos_huella.csv",header = TRUE, dec=",",sep = ";")
+BD_iso_BASE<-read.csv("BD_Isotopos_huella.csv",header = TRUE, dec=",",sep = ";")
+BD_iso_BASE<-BD_iso_BASE[-c(52),]
+```
+
+###2. Eliminamos las filas por muestreos en fecha diferente 03-11-2022
+
+```{r}
+BD_iso<-BD_iso[-c(74:82),]
+```
+
+###3. Resumen y estructura de datos
+
+```{r}
+summary(BD_iso)
+str(BD_iso)
+names(BD_iso)
+class(BD_iso$fecha)
+```
+
+###4. Dividimos la variable Long.\_Cefalotorax_mm en una nueva variable grupo con juvenil y adulto, usando dplyr
+
+```{r}
+BD_iso <- BD_iso %>%
+  mutate(grupo = ifelse(Long_Cefal_mm <= 30.00, "Juvenil", "Adulto"))
+```
+
+###5. Dividimos la variable fecha en 2 periodos
+
+```{r}
+BD_iso<- BD_iso %>%
+  mutate(periodo = case_when(
+    Fecha == "2022-11-03" ~ "Periodo 1",
+    Fecha == "2023-01-07" ~ "Periodo 2",
+    TRUE ~ ""))
+
+```
+
+###6. Aqui le damos la clase correspondiente a las variables
+
+```{r}
+
+BD_iso$ID_Sample<-as.factor(BD_iso$ID_Sample)
+BD_iso$Muestra<-as.factor(BD_iso$Muestra)
+BD_iso$Estacion<-as.factor(BD_iso$Estacion)
+BD_iso$E..Reprod.<-as.factor(BD_iso$E..Reprod.)
+BD_iso$SEXO<-as.factor(BD_iso$SEXO)
+BD_iso$X.S<-as.numeric(BD_iso$X.S)
+BD_iso$Peso_grs<-as.numeric(BD_iso$Peso_grs)
+BD_iso$Mass_mg<-as.numeric(BD_iso$Mass_mg)
+BD_iso$periodo<-as.factor(BD_iso$periodo) 
+BD_iso$grupo<-as.factor(BD_iso$grupo)
+
+```
+
+###7. Calcular condicion corporal de los ejemplares SMII
+
+```{r}
+longitud <- na.omit(BD_iso$Long_Cefal_mm)  # datos de longitud corporal
+masa <- BD_iso$Peso_grs            # y masa corporal
+
+SMA <- (longitud - mean(longitud)) / sd(longitud)  # Calcular el SMA
+bSMA <- as.numeric(exp(SMA)) #Calcular bSMA
+BD_iso$SMII <- masa/bSMA # Agregar la columna SMII a BD_iso
+```
+
+###8. Definir localidades y su orden
+
+```{r}
+# Definir el orden deseado de las localidades
+orden_localidades <- c("Cuya", "Conanoxa", "Huancarane")
+
+# Convertir la variable localidad a factor con el orden deseado
+BD_iso$Estacion <- factor(BD_iso$Estacion, levels = orden_localidades)
+
+```
+
+###9. Cambiamos la variable SEXO númerica a texto
+
+```{r}
+BD_iso$SEXO <- factor(BD_iso$SEXO, levels = c(1, 2,3), labels = c("Macho", "Hembra", "Indeter"))
+## BD_iso_BASE$SEXO <- factor(BD_iso_BASE$SEXO, levels = c(1, 2,3), labels = c("Macho", "Hembra", "Indeter"))
+levels(BD_iso$SEXO)
+class(BD_iso$Estacion) # Vemos la clase de Estación
+levels(BD_iso$Estacion) # Vemos sus niveles
+
+class(BD_iso$SEXO) # Vemos la clase de Estación
+levels(BD_iso$SEXO)
+
+names(BD_iso)
+
+str(BD_iso) # Volvemos a revisar su estructura
+
+summary(BD_iso) # Realizamos un resumen de totas las variables
+
+var_num<-BD_iso[c(8:19)] # Filtramos solo las variables numericas
+str(var_num)
+ # par(mar = c(5, 4, 4, 2) + 0.1)    Ajusta los margenes del grafico
+
+```
+
+## Sección 4. Resultados
+
+1.  Gráficos exploratorios, datos filtrados por tipo de isotopo y Estación
+
+```{r}
+datos.cuya=BD_iso[BD_iso$Estacion=="Cuya",]
+datos.Huancarane=BD_iso[BD_iso$Estacion=="Huancarane",]
+datos.Conanoxa=BD_iso[BD_iso$Estacion=="Conanoxa",]
+datos.Conanoxa=BD_iso[BD_iso$Estacion=="Conanoxa",(8:18)]
+plot(datos.cuya$Peso_grs,datos.cuya$Long_Total)
+plot(datos.Huancarane$Peso_grs,datos.Huancarane$Long_Total)
+plot(datos.Conanoxa$Peso_grs,datos.Conanoxa$Long_Total)
+names(datos.cuya)
+mean(datos.cuya$Peso_grs)
+mean(datos.Huancarane$Peso_gr)
+mean(datos.Conanoxa$Peso_gr)
+datos.juvenil=BD_iso[BD_iso$grupo=="Juvenil",]  ## Filtramos por grupo
+datos.adulto=BD_iso[BD_iso$grupo=="Adulto",]
+
+plot(BD_iso$Long_Total,BD_iso$Peso_grs)  ### REVISAR GRAFICOS  #########
+plot(BD_iso$X15N,BD_iso$Peso_grs)
+plot(BD_iso$X13C,BD_iso$Peso_grs)
+plot(BD_iso$X34S,BD_iso$Peso_grs)
+plot(BD_iso$X.N,BD_iso$Peso_grs)
+plot(BD_iso$X.C,BD_iso$Peso_grs)
+plot(BD_iso$C.N,BD_iso$Peso_grs)
+plot(BD_iso$X15N,BD_iso$SMII)
+plot(BD_iso$SMII,BD_iso$BD_iso$X13C)
+plot(BD_iso$SMII,BD_iso$BD_iso$X34S)
+plot(BD_iso$X34S,BD_iso$SMII)
+plot(datos.cuya$X15N,datos.cuya$Peso_grs)
+plot(datos.Huancarane$X15N,datos.Huancarane$Peso_grs)
+plot(datos.Conanoxa$X15N,datos.Conanoxa$Peso_grs)
+
+```
+
+Los isotopos estables en el musculo del camarón presentaron gradientes longitudinales.Los camrones ´más costeros presentaron isotopos de carbono más enriquecidos que los que se localizaron hacia el sector precordillerano, etc etc.
+
