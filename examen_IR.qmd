@@ -173,5 +173,5 @@ plot(datos.Conanoxa$X15N,datos.Conanoxa$Peso_grs)
 
 ```
 
-Los isotopos estables en el musculo del camarón presentaron gradientes longitudinales.Los camrones ´más costeros presentaron isotopos de carbono más enriquecidos que los que se localizaron hacia el sector precordillerano, etc etc.
+Los isotopos estables en el musculo del camarón presentaron gradientes longitudinales. Los camarones ´más costeros presentaron isotopos de carbono más enriquecidos que los que se localizaron hacia el sector precordillerano, etc etc. Los resultados indican que los ejemplares de estaciones de Camarones y Conanoxa poseen isotopos simlares en funcion de los pesos y longitudes registrasa y no constituyen en poblaciones aisladas.
 
